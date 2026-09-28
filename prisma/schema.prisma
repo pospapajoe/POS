@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  nik       String   @unique
+  password  String
+  name      String
+  role      String   @default("KASIR") // KASIR, ADMIN
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  transactions Transaction[]
+  shifts       Shift[]
+  eods         EOD[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  sku         String?  @unique
+  barcode     String?  @unique
+  name        String
+  hpp         Float    @default(0) // Harga Pokok Penjualan (Modal)
+  price       Float    // Harga Jual
+  category    String
+  image       String   @default("/images/placeholder.jpg")
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  transactionItems TransactionItem[]
+}
+
+model Transaction {
+  id            String     @id @default(cuid())
+  receiptNumber String     @unique
+  totalAmount   Float
+  totalHpp      Float      @default(0) // Total modal dari barang yang terjual
+  tax           Float
+  discount      Float      @default(0) // Total potongan diskon
+  paymentMethod String     @default("CASH") // CASH, QRIS
+  cashReceived  Float?     
+  cashChange    Float?     
+  createdAt     DateTime   @default(now())
+  
+  userId        String?
+  user          User?      @relation(fields: [userId], references: [id])
+  
+  shiftId       String?
+  shift         Shift?     @relation(fields: [shiftId], references: [id])
+  
+  items         TransactionItem[]
+}
+
+model TransactionItem {
+  id            String      @id @default(cuid())
+  quantity      Int
+  priceAtTime   Float
+  hppAtTime     Float       @default(0)
+  
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id])
+  
+  transactionId String
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+}
+
+model Shift {
+  id          String   @id @default(cuid())
+  startTime   DateTime @default(now())
+  endTime     DateTime?
+  status      String   @default("OPEN") // OPEN, CLOSED
+  
+  expectedCash Float @default(0)
+  actualCash   Float?
+  expectedQris Float @default(0)
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  transactions Transaction[]
+}
+
+model EOD {
+  id              String   @id @default(cuid())
+  date            DateTime @default(now())
+  
+  totalSales      Float    @default(0)
+  totalHpp        Float    @default(0)
+  totalDiscount   Float    @default(0)
+  totalTax        Float    @default(0)
+  netProfit       Float    @default(0) // Sales - HPP - Discount
+  
+  totalCash       Float    @default(0)
+  totalQris       Float    @default(0)
+  
+  closedByUserId  String
+  closedByUser    User     @relation(fields: [closedByUserId], references: [id])
+  
+  createdAt       DateTime @default(now())
+}
