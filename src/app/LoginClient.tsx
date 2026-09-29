@@ -25,8 +25,7 @@ export default function LoginClient() {
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--background)', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: 'var(--surface)', padding: '48px', borderRadius: '24px', boxShadow: 'var(--shadow-lg)', width: '450px', textAlign: 'center' }}>
-        <div style={{ fontSize: '64px', marginBottom: '16px' }}>🏪</div>
-        <h1 style={{ fontSize: '32px', fontWeight: 800, marginBottom: '8px', color: 'var(--text-main)' }}>PAPA JOE POS</h1>
+        <img src="/logo.png" alt="Papa Joe POS" style={{ height: '80px', objectFit: 'contain', marginBottom: '16px' }} />
         <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Silakan masuk menggunakan NIK Anda.</p>
         
         {error && (

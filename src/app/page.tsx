@@ -21,8 +21,7 @@ export default async function DashboardPage() {
     <div className="stock-layout">
       {/* Sidebar Kiri */}
       <div className="stock-sidebar" style={{ padding: '24px', justifyContent: 'space-between' }}>
-        <div>
-           <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--primary)', marginBottom: '32px' }}>PAPA JOE</h2>
+           <img src="/logo.png" alt="Papa Joe POS" style={{ height: '40px', objectFit: 'contain', marginBottom: '32px' }} />
            
            <div className="stock-sidebar-menu" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <Link href="/pos" style={{ padding: '16px', background: 'var(--surface)', border: '1px solid var(--primary)', borderRadius: '12px', textDecoration: 'none', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 700, boxShadow: 'var(--shadow)' }}>

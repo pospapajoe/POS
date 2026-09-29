@@ -453,7 +453,7 @@ export default function POSClient({ initialProducts, session }: { initialProduct
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', background: 'white', borderBottom: '1px solid var(--border)'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
             {session?.role === 'ADMIN' && <Link href="/" className="back-btn">←</Link>}
-            <h1 style={{fontSize: '24px', color: 'var(--primary)'}}>PAPA JOE POS</h1>
+            <img src="/logo.png" alt="Papa Joe POS" style={{ height: '40px', objectFit: 'contain' }} />
           </div>
           
           <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
