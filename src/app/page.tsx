@@ -85,7 +85,7 @@ export default async function DashboardPage() {
       {/* Konten Utama Kanan */}
       <div className="stock-main-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--background)' }}>
         <div style={{ textAlign: 'center', background: 'white', padding: '64px', borderRadius: '24px', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)' }}>
-          <div style={{ fontSize: '80px', marginBottom: '24px' }}>👋</div>
+          <img src="/logo.png" alt="Logo" style={{ height: '120px', objectFit: 'contain', marginBottom: '24px' }} />
           <h1 style={{ fontSize: '40px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '16px' }}>Selamat Datang!</h1>
           <p style={{ fontSize: '20px', color: 'var(--text-muted)' }}>Pilih menu di sidebar sebelah kiri untuk memulai.</p>
         </div>
