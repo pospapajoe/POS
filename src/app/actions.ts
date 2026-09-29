@@ -15,6 +15,18 @@ export async function addProduct(data: { sku: string; barcode: string; name: str
   });
   revalidatePath("/", "layout");
 }
+
+export async function deleteProduct(productId: string) {
+  try {
+    await prisma.product.delete({
+      where: { id: productId }
+    });
+    revalidatePath("/", "layout");
+    return { success: true };
+  } catch (e: any) {
+    return { success: false, error: "Gagal menghapus produk, pastikan tidak ada transaksi yang terkait dengan produk ini." };
+  }
+}
 export async function processTransaction(
   items: { id: string; quantity: number; price: number; hpp: number }[], 
   total: number, 

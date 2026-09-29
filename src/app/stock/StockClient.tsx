@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { addProduct, processBatchInbound } from "../actions";
+import { addProduct, processBatchInbound, deleteProduct } from "../actions";
 import ReturClient from "../retur/ReturClient";
 
 type Product = {
@@ -24,6 +24,7 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'MASTER' | 'INBOUND' | 'RETUR'>('MASTER');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Add Product Form
   const [sku, setSku] = useState("");
@@ -116,19 +117,31 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
 
   return (
     <div className="stock-layout">
+      {/* Mobile Hamburger Header */}
+      <div className="mobile-hamburger" style={{position: 'absolute', top: 0, left: 0, right: 0, height: '60px', background: 'white', borderBottom: '1px solid var(--border)', zIndex: 900, display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between'}}>
+        <div style={{fontWeight: 800, color: 'var(--primary)', fontSize: '20px'}}>PAPA JOE</div>
+        <button onClick={() => setIsSidebarOpen(true)} style={{background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer', padding: '4px'}}>☰</button>
+      </div>
+
+      {/* Overlay for mobile */}
+      {isSidebarOpen && (
+        <div className="mobile-hamburger" onClick={() => setIsSidebarOpen(false)} style={{position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 950}} />
+      )}
+
       {/* Sidebar */}
-      <div className="stock-sidebar">
-        <div style={{padding: '24px', borderBottom: '1px solid var(--border)'}}>
+      <div className={`stock-sidebar ${isSidebarOpen ? 'open' : ''}`}>
+        <div style={{padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
            <h2 style={{fontSize: '22px', fontWeight: 800, color: 'var(--primary)', margin: 0}}>📦 Manajemen Stok</h2>
+           <button className="mobile-hamburger" onClick={() => setIsSidebarOpen(false)} style={{background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer', padding: '4px'}}>×</button>
         </div>
         <div className="stock-sidebar-menu" style={{padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1}}>
-           <button onClick={() => setActiveTab('MASTER')} style={{display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', background: activeTab === 'MASTER' ? '#ecfdf5' : 'transparent', color: activeTab === 'MASTER' ? '#059669' : '#64748b', border: 'none', fontWeight: 700, fontSize: '16px', cursor: 'pointer', transition: '0.2s', textAlign: 'left'}}>
+           <button onClick={() => { setActiveTab('MASTER'); setIsSidebarOpen(false); }} style={{display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', background: activeTab === 'MASTER' ? '#ecfdf5' : 'transparent', color: activeTab === 'MASTER' ? '#059669' : '#64748b', border: 'none', fontWeight: 700, fontSize: '16px', cursor: 'pointer', transition: '0.2s', textAlign: 'left'}}>
               <span style={{fontSize: '20px'}}>📋</span> Master Barang
            </button>
-           <button onClick={() => setActiveTab('INBOUND')} style={{display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', background: activeTab === 'INBOUND' ? '#ecfdf5' : 'transparent', color: activeTab === 'INBOUND' ? '#059669' : '#64748b', border: 'none', fontWeight: 700, fontSize: '16px', cursor: 'pointer', transition: '0.2s', textAlign: 'left'}}>
+           <button onClick={() => { setActiveTab('INBOUND'); setIsSidebarOpen(false); }} style={{display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', background: activeTab === 'INBOUND' ? '#ecfdf5' : 'transparent', color: activeTab === 'INBOUND' ? '#059669' : '#64748b', border: 'none', fontWeight: 700, fontSize: '16px', cursor: 'pointer', transition: '0.2s', textAlign: 'left'}}>
               <span style={{fontSize: '20px'}}>📥</span> Terima Barang
            </button>
-           <button onClick={() => setActiveTab('RETUR')} style={{display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', background: activeTab === 'RETUR' ? '#ecfdf5' : 'transparent', color: activeTab === 'RETUR' ? '#059669' : '#64748b', border: 'none', fontWeight: 700, fontSize: '16px', cursor: 'pointer', transition: '0.2s', textAlign: 'left'}}>
+           <button onClick={() => { setActiveTab('RETUR'); setIsSidebarOpen(false); }} style={{display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', background: activeTab === 'RETUR' ? '#ecfdf5' : 'transparent', color: activeTab === 'RETUR' ? '#059669' : '#64748b', border: 'none', fontWeight: 700, fontSize: '16px', cursor: 'pointer', transition: '0.2s', textAlign: 'left'}}>
               <span style={{fontSize: '20px'}}>📤</span> Retur Barang
            </button>
         </div>
@@ -184,6 +197,7 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
                      <th>HPP (Modal)</th>
                      <th>Harga Jual</th>
                      <th>Sisa Stok</th>
+                     <th>Aksi</th>
                    </tr>
                  </thead>
                  <tbody>
@@ -206,6 +220,20 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
                          <span className={`stock-badge ${product.stock < 10 ? "low" : "good"}`}>
                            {product.stock}
                          </span>
+                       </td>
+                       <td>
+                         <button onClick={async () => {
+                           if (window.confirm("Yakin ingin menghapus produk ini?")) {
+                             const res = await deleteProduct(product.id);
+                             if (res.success) {
+                               showToast("Produk berhasil dihapus", "success");
+                             } else {
+                               showToast(res.error || "Gagal menghapus produk");
+                             }
+                           }
+                         }} style={{padding: '8px 12px', background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, fontSize: '14px'}}>
+                           Hapus
+                         </button>
                        </td>
                      </tr>
                    ))}
@@ -347,8 +375,12 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
               <div>
                 <label style={{display: 'block', marginBottom: '8px', fontWeight: 600}}>Foto Barang</label>
                 <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
-                  <div style={{width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', position: 'relative', border: '1px solid #ddd'}}>
-                    <Image src={imageFile} alt="Preview" fill sizes="80px" style={{objectFit: 'cover'}} />
+                  <div style={{width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', position: 'relative', border: '1px solid #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f9fa'}}>
+                    {imageFile && imageFile !== "/images/placeholder.jpg" && imageFile !== "" ? (
+                      <Image src={imageFile} alt="Preview" fill sizes="80px" style={{objectFit: 'cover'}} />
+                    ) : (
+                      <span style={{fontSize: '32px', color: '#cbd5e1'}}>📦</span>
+                    )}
                   </div>
                   <input type="file" accept="image/*" onChange={(e) => {
                     const file = e.target.files?.[0];

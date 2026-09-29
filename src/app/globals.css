@@ -483,6 +483,7 @@ body {
 .action-buttons button:hover { filter: brightness(0.95); }
 
 /* Responsive Unified Layout */
+.mobile-hamburger { display: none; }
 .stock-layout {
   display: flex;
   height: 100vh;
@@ -529,24 +530,37 @@ body {
   }
   
   .stock-sidebar {
-    width: 100%;
-    height: auto;
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 280px;
+    height: 100vh;
+    z-index: 1000;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
     border-right: none;
-    border-bottom: 1px solid var(--border);
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 12px;
+    flex-direction: column !important;
+    padding: 0;
+    overflow-x: hidden;
   }
-  .stock-sidebar h2 { display: none; }
+  .stock-sidebar.open {
+    left: 0;
+  }
+  .stock-sidebar h2 { display: block !important; }
   .stock-sidebar-menu {
-    flex-direction: row !important;
-    gap: 8px !important;
-    padding: 0 !important;
+    flex-direction: column !important;
   }
   .stock-sidebar-menu button {
-    padding: 12px 16px !important;
-    white-space: nowrap;
-    border-radius: 8px;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .mobile-hamburger {
+    display: block !important;
+  }
+  
+  .stock-main-content {
+    padding-top: 60px; /* Space for hamburger header */
   }
 
   .pos-sidebar, .split-right {
