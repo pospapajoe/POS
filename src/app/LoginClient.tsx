@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { login } from "./actions";
 
+import Image from "next/image";
+import logoImage from "../../public/logo.png";
+
 export default function LoginClient() {
   const [nik, setNik] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +28,7 @@ export default function LoginClient() {
   return (
     <div style={{ display: 'flex', height: '100vh', background: 'var(--background)', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: 'var(--surface)', padding: '48px', borderRadius: '24px', boxShadow: 'var(--shadow-lg)', width: '450px', textAlign: 'center' }}>
-        <img src="/logo.png" alt="EUODIA by Papa joe's Food" style={{ height: '160px', objectFit: 'contain', marginBottom: '16px' }} />
+        <Image src={logoImage} alt="EUODIA by Papa Joe's Food" style={{ height: '160px', width: 'auto', objectFit: 'contain', marginBottom: '16px' }} priority />
         <p style={{ color: 'var(--text-muted)', marginBottom: '32px' }}>Silakan masuk menggunakan NIK Anda.</p>
         
         {error && (

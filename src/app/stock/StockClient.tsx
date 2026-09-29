@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import logoImage from "../../../public/logo.png";
 import { addProduct, processBatchInbound, deleteProduct } from "../actions";
 import ReturClient from "../retur/ReturClient";
 
@@ -120,7 +121,7 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
       {/* Mobile Hamburger Header */}
       <div className="mobile-hamburger" style={{position: 'absolute', top: 0, left: 0, right: 0, height: '70px', background: 'white', borderBottom: '1px solid var(--border)', zIndex: 900, alignItems: 'center', padding: '0 20px', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.05)'}}>
         <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-          <img src="/logo.png" alt="Logo" style={{height: '40px', objectFit: 'contain'}} />
+          <Image src={logoImage} alt="Logo" style={{height: '40px', width: 'auto', objectFit: 'contain'}} priority />
           <div style={{fontWeight: 900, color: '#1e293b', fontSize: '18px', letterSpacing: '-0.5px', lineHeight: 1.1}}>
             <span style={{color: 'var(--primary)'}}>EUODIA</span><br/>
             <span style={{fontSize: '12px', color: '#64748b', fontWeight: 600}}>by Papa Joe's Food</span>
@@ -138,7 +139,7 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
       <div className={`stock-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div style={{padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
            <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
-             <img src="/logo.png" alt="Logo" style={{height: '48px', objectFit: 'contain'}} />
+             <Image src={logoImage} alt="Logo" style={{height: '48px', width: 'auto', objectFit: 'contain'}} priority />
              <div style={{fontWeight: 900, color: '#1e293b', fontSize: '20px', letterSpacing: '-0.5px', lineHeight: 1.1}}>
                <span style={{color: 'var(--primary)'}}>EUODIA</span><br/>
                <span style={{fontSize: '13px', color: '#64748b', fontWeight: 600}}>by Papa Joe's Food</span>

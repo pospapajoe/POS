@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { processTransaction, getLastTransaction } from "../actions";
+import Image from "next/image";
+import logoImage from "../../../public/logo.png";
 
 type Product = {
   id: string;
@@ -453,7 +455,7 @@ export default function POSClient({ initialProducts, session, storeSetting }: { 
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', background: 'white', borderBottom: '1px solid var(--border)'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
             {session?.role === 'ADMIN' && <Link href="/" className="back-btn">←</Link>}
-            <img src="/logo.png" alt="EUODIA by Papa joe's Food" style={{ height: '40px', objectFit: 'contain' }} />
+            <Image src={logoImage} alt="EUODIA by Papa Joe's Food" style={{ height: '40px', width: 'auto', objectFit: 'contain' }} priority />
           </div>
           
           <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
@@ -675,7 +677,7 @@ export default function POSClient({ initialProducts, session, storeSetting }: { 
               
               <div id="printable-receipt" style={{background: 'white', padding: '20px', width: '300px', fontFamily: 'monospace', fontSize: '12px', color: 'black', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'}}>
                 <div style={{textAlign: 'center', marginBottom: '10px'}}>
-                  <img src="/logo.png" alt="Logo" style={{height: '60px', width: '100%', objectFit: 'contain', marginBottom: '8px', filter: 'grayscale(100%) contrast(200%)'}} />
+                  <Image src={logoImage} alt="Logo" style={{height: '60px', width: '100%', objectFit: 'contain', marginBottom: '8px', filter: 'grayscale(100%) contrast(200%)'}} priority />
                   <h2 style={{margin: '0 0 5px 0', fontSize: '14px', fontWeight: 900}}>{storeSetting?.name || "EUODIA by Papa Joe's Food"}</h2>
                   <div>{storeSetting?.address || "Jl. Contoh POS No. 123"}</div>
                   <div>Telp: {storeSetting?.phone || "0812-3456-7890"}</div>
