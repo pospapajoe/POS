@@ -118,9 +118,15 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
   return (
     <div className="stock-layout">
       {/* Mobile Hamburger Header */}
-      <div className="mobile-hamburger" style={{position: 'absolute', top: 0, left: 0, right: 0, height: '60px', background: 'white', borderBottom: '1px solid var(--border)', zIndex: 900, display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between'}}>
-        <div style={{fontWeight: 800, color: 'var(--primary)', fontSize: '16px'}}>EUODIA by Papa joe's Food</div>
-        <button onClick={() => setIsSidebarOpen(true)} style={{background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer', padding: '4px'}}>☰</button>
+      <div className="mobile-hamburger" style={{position: 'absolute', top: 0, left: 0, right: 0, height: '70px', background: 'white', borderBottom: '1px solid var(--border)', zIndex: 900, alignItems: 'center', padding: '0 20px', justifyContent: 'space-between', boxShadow: '0 2px 10px rgba(0,0,0,0.05)'}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+          <img src="/logo.png" alt="Logo" style={{height: '40px', objectFit: 'contain'}} />
+          <div style={{fontWeight: 900, color: '#1e293b', fontSize: '18px', letterSpacing: '-0.5px', lineHeight: 1.1}}>
+            <span style={{color: 'var(--primary)'}}>EUODIA</span><br/>
+            <span style={{fontSize: '12px', color: '#64748b', fontWeight: 600}}>by Papa Joe's Food</span>
+          </div>
+        </div>
+        <button onClick={() => setIsSidebarOpen(true)} style={{background: 'none', border: 'none', fontSize: '32px', cursor: 'pointer', padding: '4px', color: '#334155'}}>☰</button>
       </div>
 
       {/* Overlay for mobile */}
@@ -131,8 +137,14 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
       {/* Sidebar */}
       <div className={`stock-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div style={{padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-           <h2 style={{fontSize: '22px', fontWeight: 800, color: 'var(--primary)', margin: 0}}>📦 Manajemen Stok</h2>
-           <button className="mobile-hamburger" onClick={() => setIsSidebarOpen(false)} style={{background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer', padding: '4px'}}>×</button>
+           <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+             <img src="/logo.png" alt="Logo" style={{height: '48px', objectFit: 'contain'}} />
+             <div style={{fontWeight: 900, color: '#1e293b', fontSize: '20px', letterSpacing: '-0.5px', lineHeight: 1.1}}>
+               <span style={{color: 'var(--primary)'}}>EUODIA</span><br/>
+               <span style={{fontSize: '13px', color: '#64748b', fontWeight: 600}}>by Papa Joe's Food</span>
+             </div>
+           </div>
+           <button className="mobile-hamburger" onClick={() => setIsSidebarOpen(false)} style={{background: 'none', border: 'none', fontSize: '32px', cursor: 'pointer', padding: '4px', color: '#64748b'}}>×</button>
         </div>
         <div className="stock-sidebar-menu" style={{padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1}}>
            <button onClick={() => { setActiveTab('MASTER'); setIsSidebarOpen(false); }} style={{display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', borderRadius: '12px', background: activeTab === 'MASTER' ? '#ecfdf5' : 'transparent', color: activeTab === 'MASTER' ? '#059669' : '#64748b', border: 'none', fontWeight: 700, fontSize: '16px', cursor: 'pointer', transition: '0.2s', textAlign: 'left'}}>

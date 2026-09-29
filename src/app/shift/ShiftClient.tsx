@@ -48,14 +48,10 @@ export default function ShiftClient({ shift, session }: { shift: any, session: a
           // Setelah print dialog muncul/selesai, baru eksekusi ke database
           await closeShift(shiftSnapshot.id, actualCash as number);
           
-          // Redirect
+          // Redirect and Logout for all users
           setTimeout(() => {
-            if (session.role === "KASIR") {
-              document.cookie = "pos_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-              window.location.href = "/";
-            } else {
-              window.location.href = "/";
-            }
+            document.cookie = "pos_session=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+            window.location.href = "/";
           }, 1000);
         }, 500);
       }
