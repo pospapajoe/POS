@@ -65,6 +65,10 @@ export default async function DashboardPage() {
                   <Link href="/reports" style={{ padding: '16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600, transition: 'all 0.2s' }}>
                     <span style={{ fontSize: '24px' }}>📊</span> Laporan & EOD
                   </Link>
+                  
+                  <Link href="/settings" style={{ padding: '16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600, transition: 'all 0.2s' }}>
+                    <span style={{ fontSize: '24px' }}>⚙️</span> Pengaturan
+                  </Link>
                 </>
               )}
            </div>

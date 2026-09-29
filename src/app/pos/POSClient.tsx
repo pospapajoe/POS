@@ -19,7 +19,7 @@ type CartItem = Product & {
   quantity: number;
 };
 
-export default function POSClient({ initialProducts, session }: { initialProducts: Product[], session: any }) {
+export default function POSClient({ initialProducts, session, storeSetting }: { initialProducts: Product[], session: any, storeSetting?: any }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   
   // Scanner
@@ -676,9 +676,9 @@ export default function POSClient({ initialProducts, session }: { initialProduct
               <div id="printable-receipt" style={{background: 'white', padding: '20px', width: '300px', fontFamily: 'monospace', fontSize: '12px', color: 'black', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'}}>
                 <div style={{textAlign: 'center', marginBottom: '10px'}}>
                   <img src="/logo.png" alt="Logo" style={{height: '60px', width: '100%', objectFit: 'contain', marginBottom: '8px', filter: 'grayscale(100%) contrast(200%)'}} />
-                  <h2 style={{margin: '0 0 5px 0', fontSize: '14px', fontWeight: 900}}>EUODIA by Papa Joe's Food</h2>
-                  <div>Jl. Contoh POS No. 123</div>
-                  <div>Telp: 0812-3456-7890</div>
+                  <h2 style={{margin: '0 0 5px 0', fontSize: '14px', fontWeight: 900}}>{storeSetting?.name || "EUODIA by Papa Joe's Food"}</h2>
+                  <div>{storeSetting?.address || "Jl. Contoh POS No. 123"}</div>
+                  <div>Telp: {storeSetting?.phone || "0812-3456-7890"}</div>
                 </div>
                 
                 <div style={{borderTop: '1px dashed black', borderBottom: '1px dashed black', padding: '5px 0', margin: '5px 0', display: 'flex', justifyContent: 'space-between'}}>

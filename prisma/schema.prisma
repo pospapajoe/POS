@@ -102,3 +102,11 @@ model EOD {
   
   createdAt       DateTime @default(now())
 }
+
+model StoreSetting {
+  id      Int    @id @default(1)
+  name    String @default("EUODIA by Papa Joe's Food")
+  address String @default("Jl. Contoh POS No. 123")
+  phone   String @default("0812-3456-7890")
+  email   String @default("hello@euodia.com")
+}
