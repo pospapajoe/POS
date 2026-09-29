@@ -42,8 +42,6 @@ model Transaction {
   receiptNumber String     @unique
   totalAmount   Float
   totalHpp      Float      @default(0) // Total modal dari barang yang terjual
-  tax           Float
-  discount      Float      @default(0) // Total potongan diskon
   paymentMethod String     @default("CASH") // CASH, QRIS
   cashReceived  Float?     
   cashChange    Float?     
@@ -93,9 +91,7 @@ model EOD {
   
   totalSales      Float    @default(0)
   totalHpp        Float    @default(0)
-  totalDiscount   Float    @default(0)
-  totalTax        Float    @default(0)
-  netProfit       Float    @default(0) // Sales - HPP - Discount
+  netProfit       Float    @default(0) // Sales - HPP
   
   totalCash       Float    @default(0)
   totalQris       Float    @default(0)

@@ -15,6 +15,7 @@ type User = {
 export default function EmployeeClient({ initialEmployees }: { initialEmployees: User[] }) {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [alertMsg, setAlertMsg] = useState("");
   
   const [nik, setNik] = useState("");
   const [name, setName] = useState("");
@@ -26,11 +27,11 @@ export default function EmployeeClient({ initialEmployees }: { initialEmployees:
     setLoading(true);
     try {
       await addEmployee({ nik, name, password, role });
-      alert("Karyawan berhasil ditambahkan!");
+      setAlertMsg("Karyawan berhasil ditambahkan!");
       setShowModal(false);
       setNik(""); setName(""); setPassword(""); setRole("KASIR");
     } catch (err: any) {
-      alert("Gagal menambahkan karyawan. NIK mungkin sudah dipakai.");
+      setAlertMsg("Gagal menambahkan karyawan. NIK mungkin sudah dipakai.");
     }
     setLoading(false);
   };
@@ -107,13 +108,25 @@ export default function EmployeeClient({ initialEmployees }: { initialEmployees:
                 </td>
                 <td>{new Date(emp.createdAt).toLocaleDateString("id-ID", { day: '2-digit', month: 'long', year: 'numeric' })}</td>
                 <td>
-                  <button className="btn-edit" onClick={() => alert("Fitur edit belum tersedia (Tahap selanjutnya)")}>Edit</button>
+                  <button className="btn-edit" onClick={() => setAlertMsg("Fitur edit belum tersedia (Tahap selanjutnya)")}>Edit</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Custom Alert Modal */}
+      {alertMsg !== "" && (
+        <div style={{position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)'}}>
+          <div style={{background: 'white', padding: '32px', borderRadius: '16px', width: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', textAlign: 'center'}}>
+            <div style={{fontSize: '48px', marginBottom: '16px'}}>ℹ️</div>
+            <h2 style={{fontSize: '24px', fontWeight: 800, marginBottom: '12px'}}>Informasi</h2>
+            <p style={{color: 'var(--text-muted)', marginBottom: '24px', lineHeight: '1.5'}}>{alertMsg}</p>
+            <button onClick={() => setAlertMsg("")} style={{width: '100%', padding: '16px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '16px', cursor: 'pointer'}}>Tutup</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

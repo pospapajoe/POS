@@ -37,6 +37,7 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
 
   const [category, setCategory] = useState(dynamicCategories[0]);
   const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [imageFile, setImageFile] = useState<string>("/images/placeholder.jpg");
 
   // Inbound Scanner State
   const [barcodeInput, setBarcodeInput] = useState("");
@@ -58,10 +59,10 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     await addProduct({
-      sku, barcode, name, hpp: Number(hpp.replace(/\D/g, "")), price: Number(price.replace(/\D/g, "")), category, stock: 0, image: "/images/latte.jpg"
+      sku, barcode, name, hpp: Number(hpp.replace(/\D/g, "")), price: Number(price.replace(/\D/g, "")), category, stock: 0, image: imageFile
     });
     setShowAddModal(false);
-    setSku(""); setBarcode(""); setName(""); setHpp(""); setPrice(""); setQty("");
+    setSku(""); setBarcode(""); setName(""); setHpp(""); setPrice(""); setQty(""); setImageFile("/images/placeholder.jpg");
     setIsCustomCategory(false);
     showToast("Barang baru berhasil ditambahkan!", "success");
   };
@@ -342,7 +343,23 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
               <button onClick={() => setShowAddModal(false)} style={{background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer'}}>×</button>
             </div>
             
-            <form onSubmit={handleAddProduct} style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
+            <form onSubmit={handleAddProduct} style={{display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '70vh', overflowY: 'auto', paddingRight: '8px'}}>
+              <div>
+                <label style={{display: 'block', marginBottom: '8px', fontWeight: 600}}>Foto Barang</label>
+                <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
+                  <div style={{width: '80px', height: '80px', borderRadius: '8px', overflow: 'hidden', position: 'relative', border: '1px solid #ddd'}}>
+                    <Image src={imageFile} alt="Preview" fill sizes="80px" style={{objectFit: 'cover'}} />
+                  </div>
+                  <input type="file" accept="image/*" onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => setImageFile(reader.result as string);
+                      reader.readAsDataURL(file);
+                    }
+                  }} style={{flex: 1, padding: '8px'}} />
+                </div>
+              </div>
               <div>
                 <label style={{display: 'block', marginBottom: '8px', fontWeight: 600}}>SKU Barang</label>
                 <input required type="text" value={sku} onChange={e => setSku(e.target.value)} style={{width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #ddd'}} placeholder="Contoh: KOP-001" />

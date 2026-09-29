@@ -12,6 +12,8 @@ export default async function ReportsPage() {
     orderBy: { createdAt: 'desc' }
   });
 
+  const productsRaw = await prisma.product.findMany();
+
   const shiftsRaw = await prisma.shift.findMany({
     include: { user: true },
     orderBy: { startTime: 'desc' }
@@ -28,5 +30,11 @@ export default async function ReportsPage() {
     endTime: s.endTime?.toISOString() || null
   }));
 
-  return <ReportClient transactions={transactions} shifts={shifts} />;
+  const products = productsRaw.map(p => ({
+    ...p,
+    createdAt: p.createdAt.toISOString(),
+    updatedAt: p.updatedAt.toISOString(),
+  }));
+
+  return <ReportClient transactions={transactions} shifts={shifts} products={products} />;
 }

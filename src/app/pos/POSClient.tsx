@@ -17,7 +17,6 @@ type Product = {
 
 type CartItem = Product & {
   quantity: number;
-  discountPercent: number;
 };
 
 export default function POSClient({ initialProducts, session }: { initialProducts: Product[], session: any }) {
@@ -26,14 +25,13 @@ export default function POSClient({ initialProducts, session }: { initialProduct
   // Scanner
   const [barcodeInput, setBarcodeInput] = useState("");
 
-  // Payment & Discount Modal States
+  // Payment States
   const [showPayment, setShowPayment] = useState(false);
-  const [showDiscountModal, setShowDiscountModal] = useState(false);
-  const [tempDiscount, setTempDiscount] = useState<number>(0);
-  const [selectedDiscountItemId, setSelectedDiscountItemId] = useState<string | null>(null);
   
   const [showTutupKasirModal, setShowTutupKasirModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
+  const [authAction, setAuthAction] = useState<{type: 'REPRINT' | 'VOID' | 'DELETE', payload?: any} | null>(null);
+  const [authPin, setAuthPin] = useState("");
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("CASH");
@@ -57,21 +55,13 @@ export default function POSClient({ initialProducts, session }: { initialProduct
         e.preventDefault();
         setShowSearchModal(true);
       }
-      if (e.key === "F8") {
+      if (e.key === "F4") {
         e.preventDefault();
-        if (cart.length > 0) {
-          const lastItem = cart[cart.length - 1];
-          setSelectedDiscountItemId(lastItem.id);
-          setTempDiscount(lastItem.discountPercent);
-          setShowDiscountModal(true);
-        }
+        setAuthAction({ type: 'VOID' });
       }
       if (e.key === "F9") {
         e.preventDefault();
-        getLastTransaction(session.id).then(tx => {
-           if (tx) setReceiptData(tx);
-           else showToast("Belum ada transaksi terakhir untuk dicetak ulang.");
-        }).catch(() => showToast("Gagal mengambil data transaksi terakhir."));
+        setAuthAction({ type: 'REPRINT' });
       }
     };
     window.addEventListener("keydown", handleKeyDown);
@@ -86,7 +76,7 @@ export default function POSClient({ initialProducts, session }: { initialProduct
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
-      return [...prev, { ...product, quantity: 1, discountPercent: 0 }];
+      return [...prev, { ...product, quantity: 1 }];
     });
   };
 
@@ -124,10 +114,7 @@ export default function POSClient({ initialProducts, session }: { initialProduct
   };
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const discountAmount = cart.reduce((sum, item) => sum + ((item.price * item.quantity) * (item.discountPercent / 100)), 0);
-  const afterDiscount = subtotal - discountAmount;
-  const tax = afterDiscount * 0.1;
-  const total = afterDiscount + tax;
+  const total = subtotal;
 
   const cashChange = paymentMethod === "CASH" && typeof cashReceived === "number" ? Math.max(0, cashReceived - total) : 0;
 
@@ -142,8 +129,6 @@ export default function POSClient({ initialProducts, session }: { initialProduct
       const receiptNo = await processTransaction(
         cart, 
         total, 
-        tax, 
-        discountAmount, 
         paymentMethod, 
         paymentMethod === "CASH" ? Number(cashReceived) : null,
         paymentMethod === "CASH" ? cashChange : null,
@@ -155,8 +140,6 @@ export default function POSClient({ initialProducts, session }: { initialProduct
         date: new Date().toLocaleString("id-ID"),
         items: [...cart],
         subtotal,
-        discountAmount,
-        tax,
         total,
         paymentMethod,
         cashReceived: paymentMethod === "CASH" ? Number(cashReceived) : null,
@@ -181,16 +164,177 @@ export default function POSClient({ initialProducts, session }: { initialProduct
     setTimeout(() => setToast(null), 3000);
   };
 
-  const handleReprint = async () => {
+  // BLUETOOTH PRINTER STATE
+  const [isBluetoothConnected, setIsBluetoothConnected] = useState(false);
+  const [printerDevice, setPrinterDevice] = useState<any>(null); // Uses any to avoid TS missing Web Bluetooth types
+
+  const connectBluetoothPrinter = async () => {
     try {
-      const tx = await getLastTransaction(session.id);
-      if (tx) {
-        setReceiptData(tx);
-      } else {
-        showToast("Belum ada transaksi terakhir untuk dicetak ulang.", "error");
+      // @ts-ignore - Web Bluetooth API
+      const device = await navigator.bluetooth.requestDevice({
+        acceptAllDevices: true,
+        optionalServices: ['000018f0-0000-1000-8000-00805f9b34fb'] // UUID standar printer kasir (SPP)
+      });
+      // @ts-ignore
+      const server = await device.gatt?.connect();
+      setPrinterDevice(server);
+      setIsBluetoothConnected(true);
+      showToast("Printer Bluetooth Terhubung!", "success");
+    } catch (error) {
+      console.error(error);
+      showToast("Gagal menghubungkan printer bluetooth", "error");
+    }
+  };
+
+  const printDirectly = async (receiptData: any) => {
+    if (!printerDevice) return false;
+    
+    try {
+      // UUID ini adalah yang paling umum untuk printer thermal BLE generik dari China (seperti MP-58A)
+      // Terkadang menggunakan service: e7810a71-73ae-499d-8c15-faa9aef0c3f2 (jika yang standar gagal)
+      let service;
+      try {
+        service = await printerDevice.getPrimaryService('000018f0-0000-1000-8000-00805f9b34fb');
+      } catch (e) {
+        // Fallback generic UUID
+        service = await printerDevice.getPrimaryService('e7810a71-73ae-499d-8c15-faa9aef0c3f2');
       }
-    } catch (e) {
-      showToast("Gagal mengambil data transaksi terakhir.", "error");
+
+      const characteristics = await service.getCharacteristics();
+      // Cari characteristic yang mendukung 'write' (biasanya TX)
+      const characteristic = characteristics.find((c: any) => c.properties.write || c.properties.writeWithoutResponse);
+      
+      if (!characteristic) {
+        throw new Error("Characteristic untuk menulis tidak ditemukan");
+      }
+
+      // ==========================================
+      // FORMAT STRUK UNTUK PRINTER 58mm (MP-58A)
+      // Lebar maksimal rata-rata 32 karakter
+      // ==========================================
+      
+      const pad = (str: string, len: number, char = ' ') => str.padEnd(len, char);
+      const center = (str: string, len = 32) => {
+        const left = Math.max(0, Math.floor((len - str.length) / 2));
+        return pad('', left) + str;
+      };
+
+      let text = "";
+      text += "\x1B\x40"; // ESC @ : Initialize printer
+      text += "\x1B\x61\x01"; // ESC a 1 : Center align
+      
+      text += center("PAPA JOE") + "\n";
+      text += center("Jl. Contoh POS No. 123") + "\n";
+      text += center("Telp: 0812-3456-7890") + "\n";
+      text += "--------------------------------\n";
+      
+      text += "\x1B\x61\x00"; // ESC a 0 : Left align
+      text += `${receiptData.date}\n`;
+      text += `Kasir: ${receiptData.cashierName}\n`;
+      text += `No   : ${receiptData.receiptNo}\n`;
+      text += "--------------------------------\n";
+      
+      receiptData.items.forEach((item: any) => {
+        text += `${item.name}\n`;
+        const qtyPrice = `${item.quantity} x ${formatPrice(item.price)}`;
+        const total = formatPrice(item.price * item.quantity);
+        // Menyusun rata kiri-kanan (total 32 char)
+        const spaces = 32 - qtyPrice.length - total.length;
+        text += qtyPrice + (spaces > 0 ? pad('', spaces) : ' ') + total + "\n";
+      });
+      
+      text += "--------------------------------\n";
+      
+      const sub = formatPrice(receiptData.subtotal);
+      text += "Subtotal" + pad('', 32 - 8 - sub.length) + sub + "\n";
+      
+      const tot = formatPrice(receiptData.total);
+      text += "TOTAL   " + pad('', 32 - 8 - tot.length) + tot + "\n";
+      text += "\n";
+
+      const pay = formatPrice(receiptData.paymentMethod === 'CASH' ? receiptData.cashReceived : receiptData.total);
+      text += pad(receiptData.paymentMethod, 8) + pad('', 32 - 8 - pay.length) + pay + "\n";
+      
+      if (receiptData.paymentMethod === 'CASH') {
+        const chg = formatPrice(receiptData.cashChange);
+        text += "KEMBALI " + pad('', 32 - 8 - chg.length) + chg + "\n";
+      }
+      
+      text += "--------------------------------\n";
+      text += "\x1B\x61\x01"; // ESC a 1 : Center align
+      text += center("Terima Kasih") + "\n";
+      text += center("Silakan Datang Kembali") + "\n";
+      text += "\n\n\n"; // Feed paper
+
+      // Convert to Uint8Array and send chunks
+      const encoder = new TextEncoder();
+      const encoded = encoder.encode(text);
+      
+      // Kirim data dalam ukuran kecil (chunk) karena BLE punya batasan payload
+      const CHUNK_SIZE = 100; 
+      for (let i = 0; i < encoded.length; i += CHUNK_SIZE) {
+        const chunk = encoded.slice(i, i + CHUNK_SIZE);
+        await characteristic.writeValue(chunk);
+      }
+      
+      showToast("Struk berhasil dicetak ke Printer Bluetooth!", "success");
+      return true;
+    } catch (error) {
+      console.error("Print error:", error);
+      showToast("Gagal mencetak ke Printer Bluetooth. Pastikan perangkat mendukung Web BLE.", "error");
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    if (receiptData) {
+      // Coba print via bluetooth dulu jika terhubung
+      if (isBluetoothConnected && printerDevice) {
+        printDirectly(receiptData);
+        // Setelah print langsung, hilangkan modal struk secara otomatis
+        setTimeout(() => setReceiptData(null), 2000); 
+      } else {
+        // Fallback: Munculkan modal dan pop-up print browser (seperti sekarang)
+        setTimeout(() => {
+          window.print();
+        }, 300); 
+      }
+    }
+  }, [receiptData, isBluetoothConnected, printerDevice]);
+
+  const handleReprint = async () => {
+    setAuthAction({ type: 'REPRINT' });
+  };
+
+  const handleAuthConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (authPin === "123456") {
+      const actionType = authAction?.type;
+      const payload = authAction?.payload;
+      
+      setAuthAction(null);
+      setAuthPin("");
+      
+      if (actionType === 'REPRINT') {
+        try {
+          const tx = await getLastTransaction(session.id);
+          if (tx) {
+            setReceiptData(tx);
+          } else {
+            showToast("Belum ada transaksi terakhir untuk dicetak ulang.", "error");
+          }
+        } catch (e) {
+          showToast("Gagal mengambil data transaksi terakhir.", "error");
+        }
+      } else if (actionType === 'VOID') {
+        setCart([]);
+        showToast("Transaksi berhasil dibatalkan (Void).", "success");
+      } else if (actionType === 'DELETE') {
+        setCart(prev => prev.filter(item => item.id !== payload));
+        showToast("Barang berhasil dihapus.", "success");
+      }
+    } else {
+      showToast("PIN Otorisasi Salah!", "error");
     }
   };
 
@@ -217,7 +361,7 @@ export default function POSClient({ initialProducts, session }: { initialProduct
                        <div style={{fontWeight: 700, fontSize: '18px'}}>{item.name}</div>
                        <div style={{color: '#64748b'}}>{item.quantity} x {formatPrice(item.price)}</div>
                      </div>
-                     <div style={{fontWeight: 800, fontSize: '18px'}}>{formatPrice((item.price * item.quantity) * (1 - item.discountPercent / 100))}</div>
+                     <div style={{fontWeight: 800, fontSize: '18px'}}>{formatPrice(item.price * item.quantity)}</div>
                    </div>
                  ))}
               </div>
@@ -225,14 +369,6 @@ export default function POSClient({ initialProducts, session }: { initialProduct
                  <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '20px', marginBottom: '12px'}}>
                     <span style={{color: '#64748b'}}>Subtotal</span>
                     <span style={{fontWeight: 700}}>{formatPrice(subtotal)}</span>
-                 </div>
-                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '20px', marginBottom: '12px'}}>
-                    <span style={{color: '#64748b'}}>Diskon Item</span>
-                    <span style={{fontWeight: 700, color: 'var(--danger)'}}>- {formatPrice(discountAmount)}</span>
-                 </div>
-                 <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '20px', marginBottom: '12px'}}>
-                    <span style={{color: '#64748b'}}>Pajak (10%)</span>
-                    <span style={{fontWeight: 700}}>{formatPrice(tax)}</span>
                  </div>
                  <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '32px', fontWeight: 800, color: 'var(--primary)', marginTop: '24px', paddingTop: '24px', borderTop: '2px dashed #cbd5e1'}}>
                     <span>TOTAL BAYAR</span>
@@ -321,6 +457,12 @@ export default function POSClient({ initialProducts, session }: { initialProduct
           </div>
           
           <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+            <button 
+              onClick={connectBluetoothPrinter} 
+              style={{padding: '12px 24px', background: isBluetoothConnected ? '#d1fae5' : '#f1f5f9', color: isBluetoothConnected ? '#065f46' : '#334155', border: isBluetoothConnected ? '1px solid #10b981' : '1px solid var(--border)', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '16px'}}
+            >
+              {isBluetoothConnected ? '✓ Printer Terhubung' : '🖨️ Hubungkan Printer BT'}
+            </button>
             <button onClick={() => setShowTutupKasirModal(true)} style={{padding: '12px 24px', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '16px'}}>
               Tutup Kasir
             </button>
@@ -374,11 +516,6 @@ export default function POSClient({ initialProducts, session }: { initialProduct
                         <td style={{padding: '16px', fontWeight: 700, fontSize: '18px'}}>
                           {item.name} 
                           <div style={{fontSize: '12px', color: '#888'}}>{item.sku}</div>
-                          {item.discountPercent > 0 && (
-                            <span style={{display: 'inline-block', marginTop: '4px', background: '#fef3c7', color: '#92400e', padding: '2px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 700}}>
-                              Diskon {item.discountPercent}%
-                            </span>
-                          )}
                         </td>
                         <td style={{padding: '16px', fontSize: '18px'}}>{formatPrice(item.price)}</td>
                         <td style={{padding: '16px'}}>
@@ -389,14 +526,11 @@ export default function POSClient({ initialProducts, session }: { initialProduct
                           </div>
                         </td>
                         <td style={{padding: '16px', fontSize: '18px', fontWeight: 800}}>
-                          {formatPrice((item.price * item.quantity) * (1 - item.discountPercent / 100))}
+                          {formatPrice(item.price * item.quantity)}
                         </td>
                         <td style={{padding: '16px'}}>
                           <div style={{display: 'flex', gap: '8px'}}>
-                            <button onClick={() => { setSelectedDiscountItemId(item.id); setTempDiscount(item.discountPercent); setShowDiscountModal(true); }} style={{padding: '8px', background: '#fef3c7', color: '#92400e', border: '1px solid #fcd34d', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', fontSize: '18px'}} title="Set Diskon">
-                              🏷️
-                            </button>
-                            <button onClick={() => updateQuantity(item.id, -item.quantity)} style={{padding: '8px 16px', background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer'}}>
+                            <button onClick={() => setAuthAction({ type: 'DELETE', payload: item.id })} style={{padding: '8px 16px', background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer'}}>
                               HAPUS
                             </button>
                           </div>
@@ -414,22 +548,9 @@ export default function POSClient({ initialProducts, session }: { initialProduct
                 <span style={{fontSize: '24px'}}>🔍</span>
                 <div>[F1] Cari Manual</div>
               </button>
-              <button onClick={() => setCart([])} className="f-btn" style={{background: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5'}}>
+              <button onClick={() => { if(cart.length > 0) setAuthAction({ type: 'VOID' }); }} className="f-btn" style={{background: '#fee2e2', color: '#991b1b', borderColor: '#fca5a5'}}>
                 <span style={{fontSize: '24px'}}>🗑️</span>
                 <div>[F4] Void / Batal</div>
-              </button>
-              <button onClick={() => {
-                if (cart.length > 0) {
-                  const lastItem = cart[cart.length - 1];
-                  setSelectedDiscountItemId(lastItem.id);
-                  setTempDiscount(lastItem.discountPercent);
-                  setShowDiscountModal(true);
-                } else {
-                  showToast("Scan barang dulu sebelum memasukkan diskon!");
-                }
-              }} className="f-btn" style={{background: '#fef3c7', color: '#92400e', borderColor: '#fcd34d'}}>
-                <span style={{fontSize: '24px'}}>🏷️</span>
-                <div>[F8] Diskon Item</div>
               </button>
               <button onClick={handleReprint} className="f-btn" style={{background: '#e0f2fe', color: '#0369a1', borderColor: '#7dd3fc'}}>
                 <span style={{fontSize: '24px'}}>🖨️</span>
@@ -453,14 +574,6 @@ export default function POSClient({ initialProducts, session }: { initialProduct
               <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #334155', paddingBottom: '16px'}}>
                 <span style={{color: '#cbd5e1'}}>Subtotal</span>
                 <span style={{fontWeight: 700}}>{formatPrice(subtotal)}</span>
-              </div>
-              <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #334155', paddingBottom: '16px'}}>
-                <span style={{color: '#cbd5e1'}}>Diskon Item</span>
-                <span style={{fontWeight: 700, color: '#f87171'}}>- {formatPrice(discountAmount)}</span>
-              </div>
-              <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #334155', paddingBottom: '16px'}}>
-                <span style={{color: '#cbd5e1'}}>Pajak (10%)</span>
-                <span style={{fontWeight: 700}}>{formatPrice(tax)}</span>
               </div>
             </div>
             
@@ -523,43 +636,35 @@ export default function POSClient({ initialProducts, session }: { initialProduct
           </div>
         )}
 
-        {/* Modal Diskon (Classic POS Style) */}
-        {showDiscountModal && (
-          <div style={{position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 150, display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
-            <div style={{background: '#f1f0e8', border: '4px solid #d9241b', borderRadius: '4px', width: '350px', boxShadow: '0 10px 25px rgba(0,0,0,0.3)', overflow: 'hidden'}}>
-              <div style={{background: '#d9241b', color: 'white', textAlign: 'center', fontWeight: 700, padding: '8px', fontSize: '18px', letterSpacing: '1px'}}>SETTING DISKON (%)</div>
-              <div style={{padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px', alignItems: 'center'}}>
+        {/* Modal Otorisasi Universal (Reprint / Void / Hapus) */}
+        {authAction && (
+          <div style={{position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 300, display: 'flex', justifyContent: 'center', alignItems: 'center', backdropFilter: 'blur(4px)'}}>
+            <div style={{background: 'white', padding: '32px', borderRadius: '16px', width: '400px', boxShadow: '0 20px 40px rgba(0,0,0,0.2)'}}>
+              <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '24px'}}>
+                <h2 style={{fontSize: '24px', fontWeight: 800}}>Otorisasi Supervisor</h2>
+                <button onClick={() => { setAuthAction(null); setAuthPin(""); }} style={{background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer'}}>×</button>
+              </div>
+              <p style={{color: 'var(--text-muted)', marginBottom: '16px'}}>
+                {authAction.type === 'REPRINT' && "Masukkan PIN Supervisor untuk mencetak ulang struk sebelumnya."}
+                {authAction.type === 'VOID' && "Masukkan PIN Supervisor untuk membatalkan (void) seluruh transaksi."}
+                {authAction.type === 'DELETE' && "Masukkan PIN Supervisor untuk menghapus barang ini dari keranjang."}
+              </p>
+              <form onSubmit={handleAuthConfirm} style={{display: 'flex', flexDirection: 'column', gap: '16px'}}>
                 <input 
-                  type="number" 
-                  value={tempDiscount}
-                  onChange={e => setTempDiscount(Number(e.target.value))}
-                  min="0" max="100"
-                  style={{width: '100%', padding: '16px', fontSize: '32px', textAlign: 'center', fontWeight: 800, border: '2px solid #999', borderRadius: '4px', background: 'white'}}
+                  type="password" 
+                  value={authPin}
+                  onChange={e => setAuthPin(e.target.value)}
+                  placeholder="Masukkan PIN (123456)"
+                  style={{width: '100%', padding: '16px', fontSize: '20px', borderRadius: '8px', border: '2px solid var(--border)', textAlign: 'center', letterSpacing: '4px', fontWeight: 700}}
                   autoFocus
                 />
-                
-                <div style={{display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', width: '100%', marginBottom: '8px'}}>
-                  {[5, 10, 15, 20, 25, 50].map(val => (
-                     <button key={val} onClick={() => setTempDiscount(val)} style={{padding: '12px', background: 'white', border: '2px solid #ccc', fontWeight: 700, fontSize: '16px', cursor: 'pointer', borderRadius: '4px'}}>{val}%</button>
-                  ))}
-                </div>
-
-                <div style={{display: 'flex', gap: '12px', width: '100%'}}>
-                  <button 
-                    onClick={() => { 
-                      setCart(prev => prev.map(item => item.id === selectedDiscountItemId ? { ...item, discountPercent: tempDiscount } : item)); 
-                      setShowDiscountModal(false); 
-                    }}
-                    style={{flex: 1, padding: '16px', background: '#fef08a', border: '2px solid #b45309', color: '#78350f', fontWeight: 800, fontSize: '18px', borderRadius: '4px', cursor: 'pointer', boxShadow: '2px 2px 0px #b45309'}}
-                  >
-                    OK
-                  </button>
-                  <button onClick={() => setShowDiscountModal(false)} style={{flex: 1, padding: '16px', background: '#fef08a', border: '2px solid #b45309', color: '#78350f', fontWeight: 800, fontSize: '18px', borderRadius: '4px', cursor: 'pointer', boxShadow: '2px 2px 0px #b45309'}}>EXIT</button>
-                </div>
-              </div>
+                <button type="submit" style={{width: '100%', padding: '16px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '18px', cursor: 'pointer'}}>Konfirmasi</button>
+              </form>
             </div>
           </div>
         )}
+
+
 
         {/* Modal Pembayaran removed from here */}
 
@@ -596,16 +701,6 @@ export default function POSClient({ initialProducts, session }: { initialProduct
                 <div style={{display: 'flex', justifyContent: 'space-between', marginTop: '5px'}}>
                   <div>Subtotal</div>
                   <div>{receiptData.subtotal}</div>
-                </div>
-                {receiptData.discountAmount > 0 && (
-                  <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                    <div>Diskon</div>
-                    <div>-{receiptData.discountAmount}</div>
-                  </div>
-                )}
-                <div style={{display: 'flex', justifyContent: 'space-between'}}>
-                  <div>Pajak (10%)</div>
-                  <div>{receiptData.tax}</div>
                 </div>
                 <div style={{display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '14px', marginTop: '5px', borderTop: '1px dashed black', paddingTop: '5px'}}>
                   <div>TOTAL</div>

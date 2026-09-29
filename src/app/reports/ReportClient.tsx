@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-export default function ReportClient({ transactions, shifts }: { transactions: any[], shifts: any[] }) {
+export default function ReportClient({ transactions, shifts, products = [] }: { transactions: any[], shifts: any[], products?: any[] }) {
   const [activeTab, setActiveTab] = useState("performa");
 
   const formatPrice = (price: number) => {
@@ -13,7 +13,6 @@ export default function ReportClient({ transactions, shifts }: { transactions: a
   const totalSales = transactions.reduce((sum, t) => sum + t.totalAmount, 0);
   const totalHpp = transactions.reduce((sum, t) => sum + t.totalHpp, 0);
   const totalMargin = totalSales - totalHpp;
-  const totalDiscount = transactions.reduce((sum, t) => sum + t.discount, 0);
   const cashSales = transactions.filter(t => t.paymentMethod === 'CASH').reduce((sum, t) => sum + t.totalAmount, 0);
   const qrisSales = transactions.filter(t => t.paymentMethod === 'QRIS').reduce((sum, t) => sum + t.totalAmount, 0);
 
@@ -31,6 +30,7 @@ export default function ReportClient({ transactions, shifts }: { transactions: a
   const avgStd = transactions.length / totalDays;
 
   // Fast/Slow moving items
+  // 1. Dapatkan jumlah terjual per barang
   const productSales = transactions.reduce((acc, t) => {
     t.items.forEach((item: any) => {
       const pName = item.product?.name || "Unknown (Deleted)";
@@ -41,9 +41,27 @@ export default function ReportClient({ transactions, shifts }: { transactions: a
     return acc;
   }, {} as Record<string, { qty: number, revenue: number }>);
 
-  const sortedProducts = Object.entries(productSales).sort((a, b) => b[1].qty - a[1].qty);
-  const fastMove = sortedProducts.slice(0, 5); 
-  const slowMove = sortedProducts.slice(-5).reverse(); 
+  const allProductStats = products.map(p => {
+    const stats = productSales[p.name] || { qty: 0, revenue: 0 };
+    return [p.name, stats];
+  });
+
+  // Jika produk dihapus tapi ada di history transaksi, tambahkan juga ke daftar
+  Object.keys(productSales).forEach(name => {
+    if (!allProductStats.find(p => p[0] === name)) {
+      allProductStats.push([name, productSales[name]]);
+    }
+  });
+
+  // 3. Sorting berdasarkan jumlah (qty)
+  const sortedProducts = allProductStats.sort((a: any, b: any) => b[1].qty - a[1].qty);
+  
+  // Fast Moving: Top 5 dengan QTY terbanyak (minimal harus laku > 0)
+  const fastMove = sortedProducts.filter((item: any) => item[1].qty > 0).slice(0, 5); 
+  
+  // Slow Moving: Bottom 5 (paling bawah/sedikit laku, termasuk 0)
+  // Untuk mencegah duplikasi tampilan jika produk cuma 1, kita filter dari fastMove jika memungkinkan.
+  const slowMove = sortedProducts.slice().reverse().filter((item: any) => !fastMove.includes(item)).slice(0, 5); 
 
   return (
     <div className="stock-container" style={{display: 'flex', flexDirection: 'column'}}>
@@ -94,7 +112,7 @@ export default function ReportClient({ transactions, shifts }: { transactions: a
               <h3 style={{marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px'}}>🔥 Fast Moving Items (Top 5)</h3>
               {fastMove.length === 0 ? <p style={{color: 'var(--text-muted)'}}>Belum ada data penjualan.</p> : (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-                  {fastMove.map((item, i) => (
+                  {fastMove.map((item: any, i) => (
                     <div key={i} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--background)', borderRadius: '8px'}}>
                       <div style={{fontWeight: 700}}>{i + 1}. {item[0]}</div>
                       <div style={{textAlign: 'right'}}>
@@ -111,7 +129,7 @@ export default function ReportClient({ transactions, shifts }: { transactions: a
               <h3 style={{marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px'}}>🐢 Slow Moving Items (Bottom 5)</h3>
               {slowMove.length === 0 ? <p style={{color: 'var(--text-muted)'}}>Belum ada data penjualan.</p> : (
                 <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-                  {slowMove.map((item, i) => (
+                  {slowMove.map((item: any, i) => (
                     <div key={i} style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--background)', borderRadius: '8px'}}>
                       <div style={{fontWeight: 700}}>{i + 1}. {item[0]}</div>
                       <div style={{textAlign: 'right'}}>
@@ -161,7 +179,6 @@ export default function ReportClient({ transactions, shifts }: { transactions: a
                   <th>Kasir</th>
                   <th>Metode</th>
                   <th>Total Belanja</th>
-                  <th>Diskon/Promo</th>
                   <th>Margin</th>
                   <th>Detail Item</th>
                 </tr>
@@ -174,7 +191,6 @@ export default function ReportClient({ transactions, shifts }: { transactions: a
                     <td>{t.user?.name || "Unknown"}</td>
                     <td><span className="badge">{t.paymentMethod}</span></td>
                     <td style={{fontWeight: 700}}>{formatPrice(t.totalAmount)}</td>
-                    <td style={{color: 'var(--danger)'}}>{t.discount > 0 ? `-${formatPrice(t.discount)}` : '-'}</td>
                     <td style={{color: 'var(--success)', fontWeight: 600}}>{formatPrice(t.totalAmount - t.totalHpp)}</td>
                     <td style={{fontSize: '12px'}}>
                       {t.items.map((item: any) => (

@@ -18,60 +18,55 @@ export default async function DashboardPage() {
   const isAdmin = session.role === "ADMIN";
 
   return (
-    <div className="dashboard-container" style={{ position: 'relative' }}>
-      {/* Header Info */}
-      <div style={{ position: 'absolute', top: '24px', right: '24px', display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontWeight: 700, fontSize: '18px' }}>{session.name}</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: '14px', textTransform: 'uppercase' }}>{session.role} • NIK: {session.nik}</div>
+    <div className="stock-layout">
+      {/* Sidebar Kiri */}
+      <div className="stock-sidebar" style={{ padding: '24px', justifyContent: 'space-between' }}>
+        <div>
+           <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--primary)', marginBottom: '32px' }}>PAPA JOE</h2>
+           
+           <div className="stock-sidebar-menu" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <Link href="/pos" style={{ padding: '16px', background: 'var(--surface)', border: '1px solid var(--primary)', borderRadius: '12px', textDecoration: 'none', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 700, boxShadow: 'var(--shadow)' }}>
+                <span style={{ fontSize: '24px' }}>🛒</span> Kasir (POS)
+              </Link>
+
+              {isAdmin && (
+                <>
+                  <Link href="/stock" style={{ padding: '16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600, transition: 'all 0.2s' }}>
+                    <span style={{ fontSize: '24px' }}>📦</span> Manajemen Stok
+                  </Link>
+
+                  {/* Retur dihapus dari sini */}
+
+                  <Link href="/employees" style={{ padding: '16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600, transition: 'all 0.2s' }}>
+                    <span style={{ fontSize: '24px' }}>👥</span> Karyawan
+                  </Link>
+
+                  <Link href="/reports" style={{ padding: '16px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', textDecoration: 'none', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 600, transition: 'all 0.2s' }}>
+                    <span style={{ fontSize: '24px' }}>📊</span> Laporan & EOD
+                  </Link>
+                </>
+              )}
+           </div>
         </div>
-        <form action={logout}>
-          <button type="submit" style={{ background: '#fee2e2', color: '#991b1b', border: 'none', padding: '12px 24px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>
-            Logout
-          </button>
-        </form>
+
+        {/* Profil dan Logout di bawah sidebar */}
+        <div style={{ marginTop: 'auto', paddingTop: '24px', borderTop: '1px solid var(--border)' }}>
+          <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '4px' }}>{session.name}</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', marginBottom: '16px' }}>{session.role} • NIK: {session.nik}</div>
+          <form action={logout}>
+            <button type="submit" style={{ width: '100%', background: '#fee2e2', color: '#991b1b', border: 'none', padding: '12px', borderRadius: '8px', fontWeight: 700, cursor: 'pointer' }}>
+              Logout
+            </button>
+          </form>
+        </div>
       </div>
 
-      <div className="dashboard-content" style={{ marginTop: '60px' }}>
-        <h1 className="dashboard-title">PAPA JOE SYSTEM</h1>
-        <p className="dashboard-subtitle">Pilih menu untuk memulai aktivitas Anda hari ini</p>
-        
-        <div className="dashboard-grid">
-          {/* Kasir - Semua Role Bisa Akses */}
-          <Link href="/pos" className="dash-card primary">
-            <div className="dash-icon">🛒</div>
-            <h2>Kasir (POS)</h2>
-            <p>Buka mesin kasir untuk melayani transaksi pembelian.</p>
-          </Link>
-
-          {/* Fitur Admin Saja */}
-          {isAdmin && (
-            <>
-              <Link href="/stock" className="dash-card secondary">
-                <div className="dash-icon">📦</div>
-                <h2>Manajemen Stok</h2>
-                <p>Tambah barang baru, update HPP, dan edit stok.</p>
-              </Link>
-              
-              <Link href="/retur" className="dash-card" style={{borderColor: 'var(--danger)'}}>
-                <div className="dash-icon">🔄</div>
-                <h2>Retur Barang</h2>
-                <p>Catat barang rusak atau ditarik dari stok gudang.</p>
-              </Link>
-
-              <Link href="/employees" className="dash-card" style={{borderColor: '#8b5cf6'}}>
-                <div className="dash-icon">👥</div>
-                <h2>Manajemen Karyawan</h2>
-                <p>Tambah akun kasir baru, reset password, & hak akses.</p>
-              </Link>
-
-              <Link href="/reports" className="dash-card" style={{borderColor: '#10b981'}}>
-                <div className="dash-icon">📊</div>
-                <h2>Laporan & EOD</h2>
-                <p>Lihat profit, riwayat shift, dan laporan penjualan harian.</p>
-              </Link>
-            </>
-          )}
+      {/* Konten Utama Kanan */}
+      <div className="stock-main-content" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--background)' }}>
+        <div style={{ textAlign: 'center', background: 'white', padding: '64px', borderRadius: '24px', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '80px', marginBottom: '24px' }}>👋</div>
+          <h1 style={{ fontSize: '40px', fontWeight: 800, color: 'var(--text-main)', marginBottom: '16px' }}>Selamat Datang!</h1>
+          <p style={{ fontSize: '20px', color: 'var(--text-muted)' }}>Pilih menu di sidebar sebelah kiri untuk memulai.</p>
         </div>
       </div>
     </div>

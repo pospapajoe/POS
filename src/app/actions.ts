@@ -15,12 +15,9 @@ export async function addProduct(data: { sku: string; barcode: string; name: str
   });
   revalidatePath("/", "layout");
 }
-
 export async function processTransaction(
   items: { id: string; quantity: number; price: number; hpp: number }[], 
   total: number, 
-  tax: number,
-  discount: number,
   paymentMethod: string,
   cashReceived: number | null,
   cashChange: number | null,
@@ -46,8 +43,6 @@ export async function processTransaction(
         receiptNumber,
         totalAmount: total,
         totalHpp,
-        tax,
-        discount,
         paymentMethod,
         cashReceived,
         cashChange,
@@ -209,9 +204,7 @@ export async function getLastTransaction(userId: string) {
       quantity: item.quantity,
       price: item.priceAtTime,
     })),
-    subtotal: tx.totalAmount + tx.discount - tx.tax,
-    discountAmount: tx.discount,
-    tax: tx.tax,
+    subtotal: tx.totalAmount,
     total: tx.totalAmount,
     paymentMethod: tx.paymentMethod,
     cashReceived: tx.cashReceived,
