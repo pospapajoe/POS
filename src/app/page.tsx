@@ -22,7 +22,7 @@ export default async function DashboardPage() {
       {/* Sidebar Kiri */}
       <div className="stock-sidebar" style={{ padding: '24px', justifyContent: 'space-between' }}>
         <div>
-           <img src="/logo.png" alt="Papa Joe POS" style={{ height: '40px', objectFit: 'contain', marginBottom: '32px' }} />
+           <img src="/logo.png" alt="EUODIA by Papa joe's Food" style={{ height: '40px', objectFit: 'contain', marginBottom: '32px' }} />
            
            <div className="stock-sidebar-menu" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <Link href="/pos" style={{ padding: '16px', background: 'var(--surface)', border: '1px solid var(--primary)', borderRadius: '12px', textDecoration: 'none', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 700, boxShadow: 'var(--shadow)' }}>

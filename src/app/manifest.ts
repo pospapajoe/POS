@@ -2,9 +2,9 @@ import { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Papa Joe POS',
-    short_name: 'POS',
-    description: 'Aplikasi Kasir Papa Joe POS',
+    name: 'EUODIA by Papa joe\'s Food',
+    short_name: 'EUODIA',
+    description: 'Aplikasi Kasir EUODIA by Papa joe\'s Food',
     start_url: '/',
     display: 'standalone',
     background_color: '#f3f4f6',

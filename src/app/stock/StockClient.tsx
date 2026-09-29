@@ -119,7 +119,7 @@ export default function StockClient({ initialProducts }: { initialProducts: Prod
     <div className="stock-layout">
       {/* Mobile Hamburger Header */}
       <div className="mobile-hamburger" style={{position: 'absolute', top: 0, left: 0, right: 0, height: '60px', background: 'white', borderBottom: '1px solid var(--border)', zIndex: 900, display: 'flex', alignItems: 'center', padding: '0 20px', justifyContent: 'space-between'}}>
-        <div style={{fontWeight: 800, color: 'var(--primary)', fontSize: '20px'}}>PAPA JOE</div>
+        <div style={{fontWeight: 800, color: 'var(--primary)', fontSize: '16px'}}>EUODIA by Papa joe's Food</div>
         <button onClick={() => setIsSidebarOpen(true)} style={{background: 'none', border: 'none', fontSize: '28px', cursor: 'pointer', padding: '4px'}}>☰</button>
       </div>
 

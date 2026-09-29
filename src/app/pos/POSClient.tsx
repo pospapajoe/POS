@@ -223,7 +223,7 @@ export default function POSClient({ initialProducts, session }: { initialProduct
       text += "\x1B\x40"; // ESC @ : Initialize printer
       text += "\x1B\x61\x01"; // ESC a 1 : Center align
       
-      text += center("PAPA JOE") + "\n";
+      text += center("EUODIA by Papa joe's Food") + "\n";
       text += center("Jl. Contoh POS No. 123") + "\n";
       text += center("Telp: 0812-3456-7890") + "\n";
       text += "--------------------------------\n";
@@ -453,7 +453,7 @@ export default function POSClient({ initialProducts, session }: { initialProduct
         <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', background: 'white', borderBottom: '1px solid var(--border)'}}>
           <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
             {session?.role === 'ADMIN' && <Link href="/" className="back-btn">←</Link>}
-            <img src="/logo.png" alt="Papa Joe POS" style={{ height: '40px', objectFit: 'contain' }} />
+            <img src="/logo.png" alt="EUODIA by Papa joe's Food" style={{ height: '40px', objectFit: 'contain' }} />
           </div>
           
           <div style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
@@ -675,7 +675,7 @@ export default function POSClient({ initialProducts, session }: { initialProduct
               
               <div id="printable-receipt" style={{background: 'white', padding: '20px', width: '300px', fontFamily: 'monospace', fontSize: '12px', color: 'black', boxShadow: '0 4px 6px rgba(0,0,0,0.1)'}}>
                 <div style={{textAlign: 'center', marginBottom: '10px'}}>
-                  <h2 style={{margin: '0 0 5px 0', fontSize: '16px'}}>PAPA JOE</h2>
+                  <h2 style={{margin: '0 0 5px 0', fontSize: '16px'}}>EUODIA by Papa joe's Food</h2>
                   <div>Jl. Contoh POS No. 123</div>
                   <div>Telp: 0812-3456-7890</div>
                 </div>

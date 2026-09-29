@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "POS Papa Joe",
-  description: "Sistem kasir sederhana untuk Papa Joe",
+  title: "EUODIA by Papa joe's Food",
+  description: "Sistem kasir EUODIA by Papa joe's Food",
 };
 
 export default function RootLayout({

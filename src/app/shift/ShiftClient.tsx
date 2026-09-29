@@ -159,7 +159,7 @@ export default function ShiftClient({ shift, session }: { shift: any, session: a
       {isPrintState && (
         <div id="printable-shift-report" style={{background: 'white', padding: '10px'}}>
           <div style={{textAlign: 'center', marginBottom: '10px'}}>
-            <h2 style={{margin: '0 0 5px 0', fontSize: '16px'}}>PAPA JOE</h2>
+            <h2 style={{margin: '0 0 5px 0', fontSize: '16px'}}>EUODIA by Papa joe's Food</h2>
             <div style={{fontWeight: 'bold'}}>LAPORAN SETORAN SHIFT</div>
           </div>
           

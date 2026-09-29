@@ -148,7 +148,11 @@ export async function getSession() {
   const cookieStore = await cookies();
   const session = cookieStore.get("pos_session");
   if (!session) return null;
-  return JSON.parse(session.value);
+  try {
+    return JSON.parse(session.value);
+  } catch (e) {
+    return null;
+  }
 }
 
 export async function getEmployees() {
