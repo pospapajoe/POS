@@ -3,8 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 
-export default function ReportClient({ transactions, shifts, products = [] }: { transactions: any[], shifts: any[], products?: any[] }) {
+export default function ReportClient({ transactions: rawTransactions, shifts: rawShifts, products = [] }: { transactions: any[], shifts: any[], products?: any[] }) {
   const [activeTab, setActiveTab] = useState("performa");
+
+  const getLocalYYYYMMDD = (dateString: string | Date) => {
+    const d = new Date(dateString);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const [filterDate, setFilterDate] = useState<string>(getLocalYYYYMMDD(new Date()));
+
+  const transactions = filterDate 
+    ? rawTransactions.filter(t => getLocalYYYYMMDD(t.createdAt) === filterDate)
+    : rawTransactions;
+
+  const shifts = filterDate
+    ? rawShifts.filter(s => getLocalYYYYMMDD(s.startTime) === filterDate || (s.endTime && getLocalYYYYMMDD(s.endTime) === filterDate))
+    : rawShifts;
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
@@ -65,10 +83,19 @@ export default function ReportClient({ transactions, shifts, products = [] }: { 
 
   return (
     <div className="stock-container" style={{display: 'flex', flexDirection: 'column'}}>
-      <div className="stock-header" style={{marginBottom: '24px'}}>
+      <div className="stock-header" style={{marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start'}}>
         <div className="stock-header-left">
           <Link href="/" className="back-btn">← Kembali ke Dashboard</Link>
           <h1 style={{marginTop: '16px'}}>Laporan & EOD (End of Day)</h1>
+        </div>
+        <div className="stock-header-right" style={{display: 'flex', gap: '12px', alignItems: 'center'}}>
+          <input 
+            type="date" 
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            style={{padding: '12px 16px', borderRadius: '12px', border: '2px solid var(--border)', fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', outline: 'none', minWidth: '200px', background: 'white'}}
+          />
+          <button onClick={() => setFilterDate("")} style={{padding: '12px 16px', borderRadius: '12px', background: 'var(--surface)', color: 'var(--text-main)', border: '2px solid var(--border)', fontWeight: 600, cursor: 'pointer'}}>Semua Waktu</button>
         </div>
       </div>
 
