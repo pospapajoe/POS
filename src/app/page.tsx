@@ -21,6 +21,7 @@ export default async function DashboardPage() {
     <div className="stock-layout">
       {/* Sidebar Kiri */}
       <div className="stock-sidebar" style={{ padding: '24px', justifyContent: 'space-between' }}>
+        <div>
            <img src="/logo.png" alt="Papa Joe POS" style={{ height: '40px', objectFit: 'contain', marginBottom: '32px' }} />
            
            <div className="stock-sidebar-menu" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
